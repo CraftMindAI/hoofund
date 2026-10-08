@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+:root {
+  --hf-display: var(--font-fraunces), Georgia, serif;
+  --hf-body: var(--font-source-sans), system-ui, sans-serif;
+}
+
+/* Tamil script needs its own face for both headings and body text. */
+html:lang(ta) {
+  --hf-display: var(--font-catamaran), system-ui, sans-serif;
+  --hf-body: var(--font-catamaran), system-ui, sans-serif;
+}
+
+@theme inline {
+  --color-forest: #1e4a2c;
+  --color-forest-deep: #153a21;
+  --color-leaf: #3f7a3a;
+  --color-cream: #f5efe0;
+  --color-sand: #ece3cd;
+  --color-card: #faf6ec;
+  --color-gold: #e2b25a;
+  --color-earth: #8a5a1c;
+  --color-ink: #2a2a24;
+  --font-sans: var(--hf-body);
+  --font-display: var(--hf-display);
+}
+
+html {
+  scroll-padding-top: 5rem;
+}
+
+body {
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--hf-body);
+}
+
+/* ---------- Animations ---------- */
+
+@keyframes nudge {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(5px); }
+}
+.nudge { display: inline-block; animation: nudge 1.4s ease-in-out infinite; }
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(226 178 90 / 0.45); }
+  50% { box-shadow: 0 0 0 10px rgb(226 178 90 / 0); }
+}
+.glow { animation: glow 2.6s ease-out infinite; }
+
+/* Slow zoom on photos */
+.kenburns { animation: kenburns 20s ease-in-out infinite alternate; }
+@keyframes kenburns {
+  from { transform: scale(1) translate(0, 0); }
+  to { transform: scale(1.12) translate(-2%, -1%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
