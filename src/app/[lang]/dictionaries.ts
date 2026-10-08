@@ -36,6 +36,8 @@ const en = {
     terms: "Terms",
     join: "Join now",
     language: "Language",
+    menu: "Open menu",
+    close: "Close menu",
   },
   hero: {
     eyebrow: "For dairy farmers & agriculture partners",
@@ -200,6 +202,8 @@ const ta: Dictionary = {
     terms: "விதிமுறைகள்",
     join: "இணையுங்கள்",
     language: "மொழி",
+    menu: "மெனுவைத் திற",
+    close: "மெனுவை மூடு",
   },
   hero: {
     eyebrow: "பால் பண்ணை விவசாயிகள் மற்றும் விவசாயக் கூட்டாளர்களுக்காக",

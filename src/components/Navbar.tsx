@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { contact, type Dictionary, type Locale } from "@/app/[lang]/dictionaries";
+import { MobileMenu } from "./MobileMenu";
 
 const languages: { code: Locale; label: string; short: string }[] = [
   { code: "ta", label: "தமிழ்", short: "த" },
@@ -84,6 +85,12 @@ export function Navbar({ lang, dict }: { lang: Locale; dict: Dictionary }) {
           >
             {dict.nav.join}
           </a>
+          <MobileMenu
+            links={links}
+            join={{ href: contact.whatsappUrl, label: dict.nav.join }}
+            openLabel={dict.nav.menu}
+            closeLabel={dict.nav.close}
+          />
         </div>
       </div>
     </header>
