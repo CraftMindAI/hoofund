@@ -1,53 +1,26 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import { contact, type Dictionary, type Locale } from "@/app/[lang]/dictionaries";
+import { AuthDialog } from "./auth/AuthDialog";
+import { HeaderShell } from "./HeaderShell";
+import { LoginButton, NavUser } from "./auth/NavUser";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import { MobileMenu } from "./MobileMenu";
 
-const languages: { code: Locale; label: string; short: string }[] = [
-  { code: "ta", label: "தமிழ்", short: "த" },
-  { code: "en", label: "English", short: "EN" },
-];
-
-function LanguageSwitcher({ lang, label }: { lang: Locale; label: string }) {
-  return (
-    <nav
-      aria-label={label}
-      className="flex items-center rounded-full border border-white/25 bg-white/10 p-1 text-sm"
-    >
-      {languages.map((l) => {
-        const active = l.code === lang;
-        return (
-          <Link
-            key={l.code}
-            href={`/${l.code}`}
-            hrefLang={l.code}
-            lang={l.code}
-            aria-current={active ? "true" : undefined}
-            className={`rounded-full px-3 py-1 font-semibold transition-colors ${
-              active ? "bg-cream text-forest" : "text-cream/85 hover:text-white"
-            }`}
-          >
-            <span className="hidden sm:inline">{l.label}</span>
-            <span className="sm:hidden">{l.short}</span>
-          </Link>
-        );
-      })}
-    </nav>
-  );
-}
-
-export function Navbar({ lang, dict }: { lang: Locale; dict: Dictionary }) {
+/** `path` keeps the language switch on the same page, e.g. "/account". */
+export function Navbar({ lang, dict, path = "" }: { lang: Locale; dict: Dictionary; path?: string }) {
   const links = [
-    { href: "#about", label: dict.nav.about },
-    { href: "#benefits", label: dict.nav.benefits },
-    { href: "#plans", label: dict.nav.plans },
-    { href: "#how", label: dict.nav.how },
-    { href: "#terms", label: dict.nav.terms },
+    { href: `/${lang}#about`, label: dict.nav.about },
+    { href: `/${lang}#benefits`, label: dict.nav.benefits },
+    { href: `/${lang}#plans`, label: dict.nav.plans },
+    { href: `/${lang}#how`, label: dict.nav.how },
+    { href: `/${lang}#terms`, label: dict.nav.terms },
   ];
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-forest/95 text-cream backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+    <HeaderShell>
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
         <Link href={`/${lang}`} className="flex shrink-0 items-center gap-2">
           <Image
             src="/images/hoofund-emblem.webp"
@@ -62,12 +35,12 @@ export function Navbar({ lang, dict }: { lang: Locale; dict: Dictionary }) {
           </span>
         </Link>
 
-        <ul className="hidden items-center gap-1 lg:flex">
+        <ul className="hidden items-center gap-0.5 xl:flex">
           {links.map((l) => (
             <li key={l.href}>
               <a
                 href={l.href}
-                className="rounded-md px-3 py-2 text-sm font-medium text-cream/85 transition-colors hover:bg-white/10 hover:text-white"
+                className="whitespace-nowrap rounded-md px-2.5 py-2 text-sm font-medium text-cream/85 transition-colors hover:bg-white/10 hover:text-white"
               >
                 {l.label}
               </a>
@@ -75,16 +48,20 @@ export function Navbar({ lang, dict }: { lang: Locale; dict: Dictionary }) {
           ))}
         </ul>
 
-        <div className="flex items-center gap-2 sm:gap-3">
-          <LanguageSwitcher lang={lang} label={dict.nav.language} />
+        <div className="flex items-center gap-1.5 sm:gap-3">
+          <LanguageSwitcher lang={lang} label={dict.nav.language} path={path} />
           <a
             href={contact.whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden rounded-full bg-gold px-4 py-2 text-sm font-bold text-forest-deep transition-colors hover:bg-[#ecc272] sm:inline-block"
+            className="hidden rounded-full bg-gold px-4 py-2 text-sm font-bold text-forest-deep transition-colors hover:bg-[#ecc272] sm:inline-block whitespace-nowrap"
           >
             {dict.nav.join}
           </a>
+          {/* Shows the login button until the session check says otherwise. */}
+          <Suspense fallback={<LoginButton t={dict.auth} />}>
+            <NavUser lang={lang} t={dict.auth} />
+          </Suspense>
           <MobileMenu
             links={links}
             join={{ href: contact.whatsappUrl, label: dict.nav.join }}
@@ -93,6 +70,7 @@ export function Navbar({ lang, dict }: { lang: Locale; dict: Dictionary }) {
           />
         </div>
       </div>
-    </header>
+      <AuthDialog lang={lang} t={dict.auth} />
+    </HeaderShell>
   );
 }

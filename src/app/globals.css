@@ -56,6 +56,24 @@ body {
   to { transform: scale(1.12) translate(-2%, -1%); }
 }
 
+/* Login / sign-up popup */
+.auth-dialog::backdrop {
+  background: rgb(21 58 33 / 0.7);
+  backdrop-filter: blur(4px);
+}
+/* Still scrolls on short screens, just without a visible scrollbar. */
+.auth-dialog { scrollbar-width: none; }
+.auth-dialog::-webkit-scrollbar { display: none; }
+.auth-dialog[open] { animation: pop 0.25s ease-out; }
+.auth-dialog[open]::backdrop { animation: fade 0.25s ease-out; }
+@keyframes pop {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fade {
+  from { opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }

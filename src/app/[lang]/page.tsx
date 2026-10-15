@@ -20,12 +20,15 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Image from "next/image";
-import { notFound } from "next/navigation";
-import type { ReactNode } from "react";
+import { notFound, unstable_rethrow } from "next/navigation";
+import { connection } from "next/server";
+import { Suspense, type ReactNode } from "react";
+import { WhatsAppIcon } from "@/components/icons";
 import { Navbar } from "@/components/Navbar";
 import { BannerVideo, SplitHeading, StepsProgress, VelocityMarquee } from "@/components/gsap";
 import { CountUp, Floating, MotionRoot, Parallax, Reveal, Stagger, StaggerItem } from "@/components/motion";
-import { contact, getDictionary, hasLocale, plans } from "./dictionaries";
+import { getPlans, type PlanView } from "@/lib/plans";
+import { contact, getDictionary, hasLocale, type Dictionary } from "./dictionaries";
 
 /** Renders text with **bold** segments. */
 function Rich({ text, strong = "text-forest" }: { text: string; strong?: string }) {
@@ -41,14 +44,6 @@ function Rich({ text, strong = "text-forest" }: { text: string; strong?: string 
         ),
       )}
     </>
-  );
-}
-
-function WhatsAppIcon({ className = "h-5 w-5" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className={className}>
-      <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm5.8 14.06c-.24.68-1.42 1.3-1.96 1.35-.5.05-.97.23-3.27-.68-2.77-1.09-4.52-3.92-4.66-4.1-.13-.18-1.1-1.47-1.1-2.8 0-1.33.7-1.99.95-2.26.24-.27.53-.34.71-.34l.51.01c.16 0 .38-.06.6.46.23.54.77 1.87.84 2 .07.14.11.3.02.47-.09.18-.13.29-.27.45-.13.16-.28.35-.4.47-.13.13-.27.28-.12.55.16.27.7 1.15 1.5 1.86 1.03.92 1.9 1.2 2.17 1.34.27.13.43.11.58-.07.16-.18.67-.78.85-1.05.18-.27.36-.22.6-.13.25.09 1.57.74 1.84.88.27.13.45.2.52.31.07.11.07.64-.17 1.32Z" />
-    </svg>
   );
 }
 
@@ -143,7 +138,9 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
             className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/25 to-transparent md:via-black/15"
           />
           <div aria-hidden className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/30 to-transparent" />
-          <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.15fr_0.85fr] md:py-20">
+          {/* Soft shade at the top so the transparent navbar stays readable */}
+          <div aria-hidden className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/45 to-transparent" />
+          <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 pb-14 pt-30 sm:px-6 md:grid-cols-[1.15fr_0.85fr] md:pb-20 md:pt-36">
             <Stagger onMount gap={0.12}>
               <StaggerItem as="p" className={`[text-shadow:0_2px_12px_rgb(0_0_0/0.55)] font-bold text-gold ${ta ? "text-sm" : "text-xs uppercase tracking-[0.18em]"}`}>
                 {dict.hero.eyebrow}
@@ -372,75 +369,10 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
             center
           />
 
-          <Stagger gap={0.1} className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {plans.map((p) => {
-              const featured = p.id === 5;
-              return (
-                <StaggerItem
-                  as="article"
-                  lift
-                  key={p.id}
-                  className={`relative flex flex-col rounded-[1.75rem] p-6 transition-shadow ${
-                    featured
-                      ? "bg-gradient-to-b from-forest to-forest-deep text-cream shadow-2xl shadow-forest/30 ring-2 ring-gold lg:-my-3 lg:py-9"
-                      : "bg-white shadow-sm ring-1 ring-sand hover:shadow-xl"
-                  }`}
-                >
-                  {featured && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gold px-3 py-1 text-xs font-bold text-forest-deep shadow">
-                      {dict.sections.featured}
-                    </span>
-                  )}
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className={`font-display text-lg font-bold ${featured ? "text-white" : "text-forest"}`}>
-                      {dict.plans.plan} {p.id}
-                    </h3>
-                    <span
-                      className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                        featured ? "bg-white/15 text-gold" : "bg-cream text-leaf"
-                      }`}
-                    >
-                      {p.cows} {p.cows === 1 ? dict.plans.cow : dict.plans.cowsUnit}
-                    </span>
-                  </div>
-
-                  <p className={`mt-6 text-xs font-medium ${featured ? "text-cream/70" : "text-ink/55"}`}>{dict.plans.total}</p>
-                  <p className={`mt-1 font-display text-[1.7rem] font-bold leading-none ${featured ? "text-gold" : "text-forest"}`}>
-                    <CountUp value={p.total} />
-                  </p>
-
-                  <dl className={`mt-6 space-y-3 border-t pt-5 text-sm ${featured ? "border-white/15" : "border-sand"}`}>
-                    <div>
-                      <dt className={featured ? "text-cream/70" : "text-ink/55"}>{dict.plans.investment}</dt>
-                      <dd className="font-semibold">{p.investment}</dd>
-                    </div>
-                    <div>
-                      <dt className={featured ? "text-cream/70" : "text-ink/55"}>
-                        {dict.plans.monthly} <span className="whitespace-nowrap">({dict.plans.monthlyNote})</span>
-                      </dt>
-                      <dd className="font-semibold">{p.monthly}</dd>
-                    </div>
-                  </dl>
-
-                  <div className="mt-auto pt-6">
-                  <a
-                    href={contact.whatsappUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`flex items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-bold transition ${
-                      featured
-                        ? "bg-gold text-forest-deep hover:bg-[#ecc272]"
-                        : "bg-cream text-forest hover:bg-forest hover:text-cream"
-                    }`}
-                  >
-                    {dict.nav.join}
-                    <ArrowRight className="h-4 w-4" aria-hidden />
-                  </a>
-                  </div>
-                </StaggerItem>
-              );
-            })}
-          </Stagger>
+          {/* Plans come from the database (cached ~1 minute) and stream in at request time. */}
+          <Suspense fallback={<PlansSkeleton />}>
+            <PlansGrid dict={dict} />
+          </Suspense>
           <Reveal y={20}>
             <p className="mx-auto mt-10 flex max-w-4xl gap-3 rounded-2xl bg-white/70 p-5 text-sm leading-relaxed text-ink/70 ring-1 ring-sand">
               <Info className="mt-0.5 h-5 w-5 shrink-0 text-leaf" aria-hidden />
@@ -731,5 +663,105 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
         <WhatsAppIcon className="relative h-7 w-7" />
       </a>
     </MotionRoot>
+  );
+}
+
+/** Plan cards, read from the `plans` table. */
+async function PlansGrid({ dict }: { dict: Dictionary }) {
+  // Load per request (from the ~1 minute cache), never at build time, so builds don't need MySQL.
+  await connection();
+  let plans: PlanView[];
+  try {
+    plans = await getPlans();
+  } catch (err) {
+    unstable_rethrow(err);
+    console.error("Plans could not be loaded", err);
+    return (
+      <p className="mx-auto mt-14 max-w-xl rounded-2xl bg-white px-6 py-8 text-center text-ink/70 ring-1 ring-sand">
+        {dict.plans.unavailable}
+      </p>
+    );
+  }
+
+  return (
+    <Stagger gap={0.1} className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      {plans?.map((p) => {
+        const featured = p?.featured;
+        return (
+          <StaggerItem
+            as="article"
+            lift
+            key={p?.id}
+            className={`relative flex flex-col rounded-[1.75rem] p-6 transition-shadow ${
+              featured
+                ? "bg-gradient-to-b from-forest to-forest-deep text-cream shadow-2xl shadow-forest/30 ring-2 ring-gold lg:-my-3 lg:py-9"
+                : "bg-white shadow-sm ring-1 ring-sand hover:shadow-xl"
+            }`}
+          >
+            {featured && (
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gold px-3 py-1 text-xs font-bold text-forest-deep shadow">
+                {dict.sections.featured}
+              </span>
+            )}
+            <div className="flex items-center justify-between gap-2">
+              <h3 className={`font-display text-lg font-bold ${featured ? "text-white" : "text-forest"}`}>
+                {dict.plans.plan} {p?.number}
+              </h3>
+              <span
+                className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                  featured ? "bg-white/15 text-gold" : "bg-cream text-leaf"
+                }`}
+              >
+                {p?.cows} {p?.cows === 1 ? dict.plans.cow : dict.plans.cowsUnit}
+              </span>
+            </div>
+
+            <p className={`mt-6 text-xs font-medium ${featured ? "text-cream/70" : "text-ink/55"}`}>{dict.plans.total}</p>
+            <p className={`mt-1 font-display text-[1.7rem] font-bold leading-none ${featured ? "text-gold" : "text-forest"}`}>
+              <CountUp value={p?.total} />
+            </p>
+
+            <dl className={`mt-6 space-y-3 border-t pt-5 text-sm ${featured ? "border-white/15" : "border-sand"}`}>
+              <div>
+                <dt className={featured ? "text-cream/70" : "text-ink/55"}>{dict.plans.investment}</dt>
+                <dd className="font-semibold">{p?.investment}</dd>
+              </div>
+              <div>
+                <dt className={featured ? "text-cream/70" : "text-ink/55"}>
+                  {dict.plans.monthly} <span className="whitespace-nowrap">({dict.plans.monthlyNote})</span>
+                </dt>
+                <dd className="font-semibold">{p?.monthly}</dd>
+              </div>
+            </dl>
+
+            <div className="mt-auto pt-6">
+            <a
+              href={contact.whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-bold transition ${
+                featured
+                  ? "bg-gold text-forest-deep hover:bg-[#ecc272]"
+                  : "bg-cream text-forest hover:bg-forest hover:text-cream"
+              }`}
+            >
+              {dict.nav.join}
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </a>
+            </div>
+          </StaggerItem>
+        );
+      })}
+    </Stagger>
+  );
+}
+
+function PlansSkeleton() {
+  return (
+    <div aria-hidden className="mt-14 grid animate-pulse gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      {[0, 1, 2, 3, 4].map((i) => (
+        <div key={i} className="h-80 rounded-[1.75rem] bg-white ring-1 ring-sand" />
+      ))}
+    </div>
   );
 }
